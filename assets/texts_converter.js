@@ -88,6 +88,7 @@ function unzip_epub(file, file_text) {
 //PDF to TXT
 const fs = require('fs');
 const PDFParser = require('pdf-parse');
+const JSZip = require('jszip');
 
 // Путь к файлу с настройками
 const settingsFilePath = 'settings.txt';
@@ -107,17 +108,9 @@ function readSettingsFile(filePath) {
     }
 }
 
-function convertPdfToTxt(pdfString, settingsFilePath) {
+function convertPdfToTxt(pdfString) {
     const pdfDataBuffer = Buffer.from(pdfString, 'base64'); // Преобразование строки в буфер
-    const settings = readSettingsFile(settingsFilePath);
-
-    let options = {}; // Опции по умолчанию (весь документ)
-    if (settings && settings.firstPage && settings.lastPage) {
-        options = {
-            firstPage: settings.firstPage,
-            lastPage: settings.lastPage,
-        };
-    }
+    const options = {}; // Опции по умолчанию (весь документ)
 
     return PDFParser(pdfDataBuffer, options)
         .then(data => {
@@ -129,6 +122,3 @@ function convertPdfToTxt(pdfString, settingsFilePath) {
             throw error;
         });
 }
-
-// Пример использования:
-// Вызывать convertPdfToTxt с базовым64 закодированной строкой PDF и путем к файлу настроек
