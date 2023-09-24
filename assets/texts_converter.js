@@ -83,3 +83,52 @@ function unzip_epub(file, file_text) {
 	const epub_file = new File([blob], 'my_epub_file_name.epub', { type: 'application/epub+zip' });					
 	convertEpubToTxt(epub_file).then(result => get_text(file.name.slice(0, file.name.lastIndexOf(".")), result, true))
 }
+
+
+//PDF to TXT
+const fs = require('fs');
+const PDFParser = require('pdf-parse');
+
+// Путь к файлу с настройками
+const settingsFilePath = 'settings.txt';
+
+function readSettingsFile(filePath) {
+    try {
+        const settings = fs.readFileSync(filePath, 'utf-8').trim();
+        const settingsObj = {};
+        settings.split('\n').forEach(line => {
+            const [key, value] = line.split(':').map(item => item.trim());
+            settingsObj[key] = parseInt(value);
+        });
+        return settingsObj;
+    } catch (error) {
+        console.error('Ошибка при чтении файла настроек:', error);
+        return null;
+    }
+}
+
+function convertPdfToTxt(pdfString, settingsFilePath) {
+    const pdfDataBuffer = Buffer.from(pdfString, 'base64'); // Преобразование строки в буфер
+    const settings = readSettingsFile(settingsFilePath);
+
+    let options = {}; // Опции по умолчанию (весь документ)
+    if (settings && settings.firstPage && settings.lastPage) {
+        options = {
+            firstPage: settings.firstPage,
+            lastPage: settings.lastPage,
+        };
+    }
+
+    return PDFParser(pdfDataBuffer, options)
+        .then(data => {
+            // Извлекаем текст из PDF и возвращаем его как строку
+            return data.text;
+        })
+        .catch(error => {
+            console.error('Ошибка при конвертации PDF в TXT:', error);
+            throw error;
+        });
+}
+
+// Пример использования:
+// Вызывать convertPdfToTxt с базовым64 закодированной строкой PDF и путем к файлу настроек
